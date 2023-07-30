@@ -40,8 +40,8 @@ dev = [
     "flake8",
     "flake8-quotes",
     "autopep8",
-    "pytest",
-    "PyGObject-stubs"
+    "PyGObject-stubs",
+    "bump2version",
 ]
 
 [project.urls]
