@@ -19,7 +19,7 @@ pip install git+https://github.com/pierre-24/vasp-opt-follows.git
 To launch the application:
 
 ```bash
-vasp-opt-follows [vaspout.h5,...]
+vasp-opt-follows [vaspout.h5 [...]]
 ```
 
 Then, drop any `vaspout.h5` file or use the "Open" button to open them.
