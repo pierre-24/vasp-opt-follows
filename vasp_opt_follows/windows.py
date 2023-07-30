@@ -6,7 +6,7 @@ from matplotlib.backends.backend_gtk4 import NavigationToolbar2GTK4 as Navigatio
 from matplotlib.backends.backend_gtk4agg import FigureCanvasGTK4Agg as FigureCanvas
 
 import vasp_opt_follows
-from vasp_opt_follows.data import VASPData, VaspDataError
+from vasp_opt_follows.data import VASPData, VASPDataError
 
 gi.require_version('Gtk', '4.0')
 from gi.repository import GLib, Gtk, Gio, Gdk  # noqa
@@ -52,28 +52,33 @@ class GraphWindow(Gtk.Dialog):
             GLib.idle_add(do_event, event, [])
             event.wait()
 
+        def make_notebook_page(graph) -> Gtk.Box:
+            vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+            canvas = FigureCanvas(graph)
+            canvas.set_size_request(800, 600)
+            vbox.append(canvas)
+            toolbar = NavigationToolbar(canvas)
+            vbox.append(toolbar)
+
+            return vbox
+
         # load data
         try:
             self.opt_data = VASPData.from_h5(path)
-        except (OSError, KeyError, ValueError, VaspDataError) as e:
+        except (OSError, KeyError, ValueError, VASPDataError) as e:
             make_error('Error while opening file', str(e))
             return
 
-        # create graph
-        fig = self.opt_data.make_graph()
+        # create graphs
+        fig_energy, fig_position = self.opt_data.make_graphs()
 
-        # make canvas+toolbar
-        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        # create notebook
+        notebook = Gtk.Notebook()
+        notebook.append_page(make_notebook_page(fig_energy), Gtk.Label(label='Energy and forces'))
+        notebook.append_page(make_notebook_page(fig_position), Gtk.Label(label='Positions and lattice'))
 
-        canvas = FigureCanvas(fig)  # a Gtk.DrawingArea
-        canvas.set_size_request(800, 600)
-        vbox.append(canvas)
-
-        toolbar = NavigationToolbar(canvas)
-        vbox.append(toolbar)
-
-        # replace child
-        set_child(vbox)
+        # replace child with notebook
+        set_child(notebook)
 
     def show_error(self, title: str, message: str):
         """Show the error in `MessageDialog`
