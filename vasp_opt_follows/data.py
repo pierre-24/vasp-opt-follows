@@ -12,7 +12,13 @@ class VASPDataError(Exception):
 
 
 class VASPData:
-    def __init__(self, energies: NDArray[float], forces: NDArray[float], positions: NDArray[float], lattice_vectors: NDArray[float]):
+    def __init__(
+        self,
+        energies: NDArray[float],
+        forces: NDArray[float],
+        positions: NDArray[float],
+        lattice_vectors: NDArray[float]
+    ):
 
         # main quantities:
         self.energies = energies
