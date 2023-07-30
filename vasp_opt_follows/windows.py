@@ -1,4 +1,3 @@
-import pathlib
 import threading
 import gi
 
@@ -219,7 +218,7 @@ class AppWindow(Gtk.ApplicationWindow):
         about_dialog.set_transient_for(self)
         about_dialog.set_modal(True)
 
-        about_dialog.set_program_name(pathlib.Path(__file__).name)
+        about_dialog.set_program_name('vasp-opt-follows')
         about_dialog.set_authors([vasp_opt_follows.__author__])
         about_dialog.set_comments(vasp_opt_follows.__doc__)
         about_dialog.set_copyright('Copyright 2023 {}'.format(vasp_opt_follows.__author__))
