@@ -9,7 +9,7 @@ import vasp_opt_follows
 from vasp_opt_follows.data import VASPData, VASPDataError
 
 gi.require_version('Gtk', '4.0')
-from gi.repository import GLib, Gtk, Gio, Gdk  # noqa
+from gi.repository import GLib, Gtk, Gio, Gdk, Pango  # noqa
 
 
 class GraphWindow(Gtk.Dialog):
@@ -52,16 +52,6 @@ class GraphWindow(Gtk.Dialog):
             GLib.idle_add(do_event, event, [])
             event.wait()
 
-        def make_notebook_page(graph) -> Gtk.Box:
-            vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-            canvas = FigureCanvas(graph)
-            canvas.set_size_request(800, 600)
-            vbox.append(canvas)
-            toolbar = NavigationToolbar(canvas)
-            vbox.append(toolbar)
-
-            return vbox
-
         # load data
         try:
             self.opt_data = VASPData.from_h5(path)
@@ -74,11 +64,66 @@ class GraphWindow(Gtk.Dialog):
 
         # create notebook
         notebook = Gtk.Notebook()
-        notebook.append_page(make_notebook_page(fig_energy), Gtk.Label(label='Energy and forces'))
-        notebook.append_page(make_notebook_page(fig_position), Gtk.Label(label='Positions and lattice'))
+        notebook.append_page(self.make_notebook_page_graph(fig_energy), Gtk.Label(label='Energy and forces'))
+        notebook.append_page(self.make_notebook_page_graph(fig_position), Gtk.Label(label='Positions and lattice'))
+        notebook.append_page(self.make_notebook_page_data(self.opt_data), Gtk.Label(label='Data'))
 
         # replace child with notebook
         set_child(notebook)
+
+    @staticmethod
+    def make_notebook_page_graph(graph) -> Gtk.Box:
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        canvas = FigureCanvas(graph)
+        canvas.set_size_request(800, 600)
+        vbox.append(canvas)
+        toolbar = NavigationToolbar(canvas)
+        vbox.append(toolbar)
+
+        return vbox
+
+    @staticmethod
+    def make_notebook_page_data(data: VASPData) -> Gtk.ScrolledWindow:
+        """Show the data.
+
+        TODO: The whole `Gtk.TreeView` stuff is actually deprecated. Use `Gtk.ColumnView` instead
+              (see https://docs.gtk.org/gtk4/class.ColumnView.html).
+        """
+        tree_source = Gtk.ListStore(
+            int,
+            float, float,
+            float, float,
+            float, float,
+            float, float, float, float
+        )
+
+        column_names = [
+            '#',
+            'Energy\n(eV)', 'ΔE\n(eV)',
+            'Max forces\n(eV/Å)', 'RMS forces\n(eV/Å)',
+            'Max displacement\n(Å)', 'RMS displacement\n(Å)',
+            'a\n(Å)', 'b\n(Å)', 'c\n(Å)', 'Volume\n(Å³)'
+        ]
+
+        for i in range(data.N):
+            tree_source.append([
+                i,
+                data.energies[i], data.delta_e[i - 1] if i > 0 else None,
+                data.forces_max[i], data.forces_rms[i],
+                data.displacements_max[i - 1] if i > 0 else None, data.displacements_rms[i - 1] if i > 0 else None,
+                data.lattice_vectors_norm[i, 0], data.lattice_vectors_norm[i, 1], data.lattice_vectors_norm[i, 2], data.cell_volumes[i]
+            ])
+
+        tree_view = Gtk.TreeView(model=tree_source)
+
+        for index, name in enumerate(column_names):
+            renderer = Gtk.CellRendererText(xalign=0.5, yalign=0.5)
+            column = Gtk.TreeViewColumn(name, cell_renderer=renderer, text=index)
+            tree_view.append_column(column)
+
+        scrolled_window = Gtk.ScrolledWindow()
+        scrolled_window.set_child(tree_view)
+        return scrolled_window
 
     def show_error(self, title: str, message: str):
         """Show the error in `MessageDialog`

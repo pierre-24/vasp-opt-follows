@@ -21,6 +21,7 @@ class VASPData:
     ):
 
         # main quantities:
+        self.N = energies.shape[0]
         self.energies = energies
         self.forces = forces
         self.positions = positions
@@ -69,11 +70,11 @@ class VASPData:
         """Get the "energy" (energy + forces) graph and the "position" (position + lattice vectors) grap"""
 
         # plot it
-        X = numpy.arange(0, self.energies.shape[0])
-        X2 = numpy.arange(1, self.energies.shape[0])
+        X = numpy.arange(0, self.N)
+        X2 = numpy.arange(1, self.N)
 
         # "energy" graph:
-        fig_energy = Figure(figsize=(6, 6), dpi=100)
+        fig_energy = Figure(figsize=(6, 4), dpi=100)
 
         # -- ENERGY
         ax = fig_energy.add_subplot(211)
